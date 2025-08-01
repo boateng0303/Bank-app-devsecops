@@ -1,11 +1,11 @@
-# name: Bakend Deployment
+name: Bakend Deployment
 
-# on:
-#   push:
-#     branches: [main]
-#     paths:
-#       - app/BankingSystemBackend/**
-#       - Bank-app-devsecops/.github/workflows/backend.deployment.yaml
+on:
+  push:
+    branches: [main]
+    paths:
+      - app/BankingSystemBackend/**
+      - Bank-app-devsecops/.github/workflows/backend.deployment.yaml
 
 jobs:
   build:
@@ -27,7 +27,7 @@ jobs:
     - name: Configure AWS credentials (OIDC)
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/<GITHUB_OIDC_ROLE_NAME>
+        role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/ROLE_NAME
         aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Log in to Amazon ECR
