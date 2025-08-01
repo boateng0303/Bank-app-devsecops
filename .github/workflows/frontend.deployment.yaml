@@ -9,9 +9,7 @@ on:
       - app/BankingSystemFrontend/**
       - .github/workflows/frontend.deployment.yaml
 
-    paths-ignore:
-      -  app/BankingSystemFrontend/**
-
+    
 
 jobs:
   build:
