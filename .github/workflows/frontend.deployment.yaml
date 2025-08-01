@@ -40,7 +40,7 @@ jobs:
     - name: Build and Push Docker image
       run: |
         IMAGE_TAG=${{ github.run_number }}
-        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_FRONTEND_ECR_REPOSITORY }}:$IMAGE_TAG
+        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.FRONTEND_ECR_REPOSITORY }}:$IMAGE_TAG
         docker build -f app/BankingSystemFrontend/Dockerfile -t $IMAGE_URI app/BankingSystemFrontend
         docker push $IMAGE_URI
 
