@@ -3,14 +3,14 @@ name: Security Scan and Email Alert
 on:
   workflow_dispatch
 
-permissions:
-  id-token: write
-  contents: write
+# permissions:
+#   id-token: write
+#   contents: write
 
 jobs:
   scan:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
 
     steps:
     - name: Checkout code
