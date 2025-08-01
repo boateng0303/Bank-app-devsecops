@@ -1,5 +1,5 @@
 
-name: Frontend Deploymentt
+name: Frontend Deployment
 
 on:
   push:
