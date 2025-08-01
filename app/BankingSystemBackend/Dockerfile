@@ -1,34 +1,26 @@
 # ----------- Build Stage -----------
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM eclipse-temurin:17-jdk as build
 
 WORKDIR /app
 
-# Copy Maven wrapper and config
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+# Copy project files
+COPY . .
 
-# Give execute permission to mvnw
+# Ensure Maven wrapper is executable
 RUN chmod +x mvnw
 
-# Download dependencies
-RUN ./mvnw dependency:go-offline
-
-# Copy source code
-COPY src ./src
-
-# Build the application
-RUN ./mvnw clean package -DskipTests
+# Build the application with required JVM args for Lombok on Java 17+
+RUN ./mvnw clean package -DskipTests \
+    -Dmaven.compiler.compilerArgs="--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED"
 
 # ----------- Runtime Stage -----------
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-# Copy the JAR file from the build stage
+# Copy only the JAR from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose the port your app uses (change if needed)
-EXPOSE 8081
+EXPOSE 8080
 
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
