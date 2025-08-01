@@ -29,6 +29,6 @@ output "kubectl_config_command" {
   value       = "aws eks update-kubeconfig --region ${var.region} --name ${var.cluster_name}"
 }
 
-output "ecr_url" {
-  value = module.ecr.repository_url
-}
+# output "ecr_url" {
+#   value = module.ecr.repository_url
+# }
