@@ -29,21 +29,17 @@ jobs:
     - name: Extract backend image URI
       id: get-backend-image
       run: |
-        IMAGE=$(grep 'image:' argocd/backend/deployment.yaml | awk '{print $2}')
-        echo "backend-image-uri=$IMAGE" >> $GITHUB_OUTPUT
+          IMAGE=$(grep 'image:' argocd/backend/deployment.yaml | awk '{print $2}')
+          echo "backend-image-uri=$IMAGE" >> $GITHUB_OUTPUT
 
     - name: Run Trivy vulnerability scanner (Backend)
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ steps.get-backend-image.outputs.backend-image-uri }}
-        format: 'table'
-        output: 'backend-trivy-results'
-        severity: 'CRITICAL,HIGH'
-        exit-code: 0
-
-    - name: Show Trivy Scan Results Backend Image
-      run: cat backend-trivy-results
-
+          image-ref: ${{ steps.get-backend-image.outputs.backend-image-uri }}
+          format: 'table'
+          output: 'backend-trivy-results'
+          severity: 'CRITICAL,HIGH'
+          exit-code: 0
       
     - name: Extract frontend image URI
       id: get-frontend-image
@@ -59,9 +55,6 @@ jobs:
         output: 'frontend-trivy-results'
         severity: 'CRITICAL,HIGH'
         exit-code: 0
-
-    - name: Show Trivy Scan Results Frontend Image
-      run: cat frontend-trivy-results
 
     - name: SonarCloud Scan (Backend)
       uses: SonarSource/sonarcloud-github-action@v2
