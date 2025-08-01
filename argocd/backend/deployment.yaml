@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: your-dockerhub-username/banking-backend:latest
+        image: 954108257389.dkr.ecr.us-east-1.amazonaws.com/kay:12
         ports:
         - containerPort: 8081
         env:
