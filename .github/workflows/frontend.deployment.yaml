@@ -48,7 +48,7 @@ jobs:
       run: |
         IMAGE_TAG=${{ github.run_number }}
         IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-        sed -i "s|image: .*|image: $IMAGE_URI|" argocd/backend/deployment.yaml
+        sed -i "s|image: .*|image: $IMAGE_URI|" argocd/frontend/deployment.yaml
         echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
     - name: Commit updated deployment.yaml
