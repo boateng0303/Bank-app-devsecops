@@ -5,8 +5,9 @@ on:
   push:
     branches: 
       - main
-    paths-ignore:
-      - argocd/backend/**
+    paths:
+      - app/BankingSystemFrontend/**
+      - .github/workflows/frontend.deployment.yaml
 
     
 
@@ -55,6 +56,6 @@ jobs:
       run: |
         git config user.email "boatengkwasi0303@gmail.com"
         git config user.name "Kwasi B"
-        git add argocd/backend/deployment.yaml
+        git add argocd/frontend/deployment.yaml
         git commit -m "Update image tag to $IMAGE_TAG"
         git push
