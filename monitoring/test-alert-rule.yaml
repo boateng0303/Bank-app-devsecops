@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: always-firing-alert
+  labels:
+    release: kube-prom-stack
+spec:
+  groups:
+    - name: test.rules
+      rules:
+        - alert: AlwaysFiringTestAlert
+          expr: vector(1)
+          for: 10s
+          labels:
+            severity: critical
+          annotations:
+            summary: "This is a test alert that always fires"
+            description: "Used to test Slack integration from Alertmanager"

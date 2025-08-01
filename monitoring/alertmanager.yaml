@@ -1,0 +1,33 @@
+global:
+  resolve_timeout: 5m  
+
+route:
+  receiver: 'slack-notifications' 
+  group_wait: 30s                 
+  group_interval: 5m              
+  repeat_interval: 3h           
+
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/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'
+      
+        channel: '#alert'  
+
+        username: 'Prometheus Alertmanager'
+        icon_emoji: ':rotating_light:'
+        send_resolved: true
+        title: '{{ .CommonLabels.alertname }}'
+        text: >
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Status:* {{ .Status }}
+          *Instance:* {{ .CommonLabels.instance }}
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']

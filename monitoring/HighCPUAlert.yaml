@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: high-cpu-alert
+  labels:
+    release: kube-prom-stack
+spec:
+  groups:
+    - name: node.rules
+      rules:
+        - alert: HighNodeCPUUsage
+          expr: (100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100)) > 50
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage detected"
+            description: "Node {{ $labels.instance }} has CPU usage above 50% for over 2 minutes."
