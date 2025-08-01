@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - app/BankingSystemBackend/**
-      - Bank-app-devsecops/.github/workflows/backend.deployment.yaml
+      - .github/workflows/backend.deployment.yaml
 
 permissions:
       id-token: write
