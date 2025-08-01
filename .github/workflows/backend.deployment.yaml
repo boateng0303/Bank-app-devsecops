@@ -1,4 +1,4 @@
-name: Bakend Deploymentt
+name: Bakend Deployment
 
 on:
   push:
