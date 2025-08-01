@@ -8,15 +8,15 @@ on:
       - app/BankingSystemBackend/**
       - .github/workflows/backend.deployment.yaml
 
-permissions:
-      id-token: write
-      contents: write
-      actions: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+
 
     steps:
     - name: Checkout source
