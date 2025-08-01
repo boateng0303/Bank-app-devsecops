@@ -17,6 +17,6 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: your-dockerhub-username/banking-frontend:latest
+        image: 954108257389.dkr.ecr.us-east-1.amazonaws.com/kwasi:12
         ports:
         - containerPort: 80
