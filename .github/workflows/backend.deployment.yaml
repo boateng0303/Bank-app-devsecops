@@ -40,7 +40,7 @@ jobs:
       run: |
         IMAGE_TAG=${{ github.run_number }}
         IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
-        docker build -t $IMAGE_URI .
+        docker build -f app/BankingSystemBackend/Dockerfile -t $IMAGE_URI .
         docker push $IMAGE_URI
 
     - name: Replace image tag in deployment.yaml
