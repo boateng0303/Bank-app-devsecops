@@ -2,18 +2,21 @@ name: Bakend Deploymentt
 
 on:
   push:
-    branches: [main]
+    branches: 
+      - main
     paths:
       - app/BankingSystemBackend/**
       - Bank-app-devsecops/.github/workflows/backend.deployment.yaml
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
+permissions:
       id-token: write
       contents: write
       actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
 
     steps:
     - name: Checkout source
