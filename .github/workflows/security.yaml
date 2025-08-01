@@ -3,9 +3,9 @@ name: Security Scan and Email Alert
 on:
   workflow_dispatch
 
-# permissions:
-#   id-token: write
-#   contents: write
+permissions:
+  id-token: write
+  contents: write
 
 jobs:
   scan:
@@ -54,7 +54,7 @@ jobs:
     - name: Run Trivy vulnerability scanner (Frontend)
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ steps.get-frontend-image.outputs.backend-image-uri }}
+        image-ref: ${{ steps.get-frontend-image.outputs.frontend-image-uri }}
         format: 'table'
         output: 'frontend-trivy-results'
         severity: 'CRITICAL,HIGH'
