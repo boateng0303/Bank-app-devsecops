@@ -18,7 +18,7 @@ spec:
       - name: backend
         image: 954108257389.dkr.ecr.us-east-1.amazonaws.com/kay:17
         ports:
-        - containerPort: 8081
+        - containerPort: 8080
         env:
         - name: SPRING_DATA_MONGODB_URI
           valueFrom:
