@@ -4,19 +4,24 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+
+import javax.persistence.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document
+@Entity
+@Table(name = "accounts")
 public class Account {
 
     @Id
-    private String id;
-    private String accountNo;
-    private Long balance;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // auto-increment ID
+    private Long id;
 
+    @Column(name = "account_no", nullable = false, unique = true)
+    private String accountNo;
+
+    @Column(nullable = false)
+    private Long balance;
 }

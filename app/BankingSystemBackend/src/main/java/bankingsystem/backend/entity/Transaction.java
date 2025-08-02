@@ -4,25 +4,34 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.persistence.*;
 import java.util.Date;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document
+@Entity
+@Table(name = "transactions")
 public class Transaction implements Comparable<Transaction> {
 
     @Id
-    private String id;
-    private String transferFrom;
-    private String transferTo;
-    private Long amount;
-    private Date date;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    @Column(name = "transfer_from", nullable = false)
+    private String transferFrom;
+
+    @Column(name = "transfer_to", nullable = false)
+    private String transferTo;
+
+    @Column(nullable = false)
+    private Long amount;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(nullable = false)
+    private Date date;
 
     @Override
     public int compareTo(Transaction transaction) {
