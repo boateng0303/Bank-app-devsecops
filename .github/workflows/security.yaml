@@ -1,98 +1,241 @@
-name: Security Scan and Email Alert
+name: CI/CD Pipeline for Banking System
 
 on:
-  workflow_dispatch
-
-permissions:
-  id-token: write
-  contents: write
+  push:
+    branches: workflow_depatch
 
 jobs:
-  scan:
+  build-and-scan:
     runs-on: ubuntu-latest
-    
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Configure AWS credentials (OIDC)
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{secrets.ROLE_NAME}}
-        aws-region: ${{ secrets.AWS_REGION }}
+      ##############################
+      # BACKEND - SONARQUBE SCAN
+      ##############################
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-    - name: Log in to Amazon ECR
-      uses: aws-actions/amazon-ecr-login@v2
+      - name: Build Backend (Maven)
+        run: mvn clean install -f app/BankingSystemBackend/pom.xml
 
-    - name: Extract backend image URI
-      id: get-backend-image
-      run: |
+      - name: SonarQube Scan (Backend)
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=backend-bank \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.java.binaries=target/classes \
+            -f app/BankingSystemBackend/pom.xml
+
+      ##############################
+      # FRONTEND - SONARQUBE SCAN
+      ##############################
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Frontend Dependencies
+        working-directory: app/BankingSystemFrontend
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: app/BankingSystemFrontend
+        run: npm run build
+
+      - name: SonarQube Scan (Frontend)
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npm install -g sonar-scanner
+          sonar-scanner \
+            -Dsonar.projectKey=frontend-bank \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=$SONAR_TOKEN
+        working-directory: app/BankingSystemFrontend
+
+      ##############################
+      # TRIVY IMAGE SCAN - BACKEND
+      ##############################
+      - name: Extract backend image URI
+        id: get-backend-image
+        run: |
           IMAGE=$(grep 'image:' argocd/backend/deployment.yaml | awk '{print $2}')
           echo "backend-image-uri=$IMAGE" >> $GITHUB_OUTPUT
 
-    - name: Run Trivy vulnerability scanner (Backend)
-      uses: aquasecurity/trivy-action@master
-      with:
+      - name: Run Trivy vulnerability scanner (Backend)
+        uses: aquasecurity/trivy-action@master
+        with:
           image-ref: ${{ steps.get-backend-image.outputs.backend-image-uri }}
           format: 'table'
           output: 'backend-trivy-results'
           severity: 'CRITICAL,HIGH'
           exit-code: 0
+
+      ##############################
+      # TRIVY IMAGE SCAN - FRONTEND
+      ##############################
+      - name: Extract frontend image URI
+        id: get-frontend-image
+        run: |
+          IMAGE=$(grep 'image:' argocd/frontend/deployment.yaml | awk '{print $2}')
+          echo "frontend-image-uri=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Run Trivy vulnerability scanner (Frontend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.get-frontend-image.outputs.frontend-image-uri }}
+          format: 'table'
+          output: 'frontend-trivy-results'
+          severity: 'CRITICAL,HIGH'
+          exit-code: 0
+
+      ##############################
+      # EMAIL REPORT
+      ##############################
+      - name: Send Email on Success
+        if: ${{ success() }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: CI/CD Scan Report - Banking System
+          to: ${{ secrets.RECEIVER_EMAIL }}
+          from: CI/CD Bot <${{ secrets.EMAIL_USERNAME }}>
+          body: |
+            ✅ CI/CD Workflow Completed
+
+            🔍 Backend Image Scanned:
+            URI: ${{ steps.get-backend-image.outputs.backend-image-uri }}
+
+            🔍 Frontend Image Scanned:
+            URI: ${{ steps.get-frontend-image.outputs.frontend-image-uri }}
+
+            📦 SonarQube reports available at:
+            - Backend: https://sonarcloud.io/project/overview?id=backend-bank
+            - Frontend: https://sonarcloud.io/project/overview?id=frontend-bank
+
+          attachments: |
+            backend-trivy-results
+            frontend-trivy-results
+
+
+# name: Security Scan and Email Alert
+
+# on:
+#   workflow_dispatch
+
+# permissions:
+#   id-token: write
+#   contents: write
+
+# jobs:
+#   scan:
+#     runs-on: ubuntu-latest
+    
+
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v4
+
+#     - name: Configure AWS credentials (OIDC)
+#       uses: aws-actions/configure-aws-credentials@v4
+#       with:
+#         role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{secrets.ROLE_NAME}}
+#         aws-region: ${{ secrets.AWS_REGION }}
+
+
+#     - name: Log in to Amazon ECR
+#       uses: aws-actions/amazon-ecr-login@v2
+
+#     - name: Extract backend image URI
+#       id: get-backend-image
+#       run: |
+#           IMAGE=$(grep 'image:' argocd/backend/deployment.yaml | awk '{print $2}')
+#           echo "backend-image-uri=$IMAGE" >> $GITHUB_OUTPUT
+
+#     - name: Run Trivy vulnerability scanner (Backend)
+#       uses: aquasecurity/trivy-action@master
+#       with:
+#           image-ref: ${{ steps.get-backend-image.outputs.backend-image-uri }}
+#           format: 'table'
+#           output: 'backend-trivy-results'
+#           severity: 'CRITICAL,HIGH'
+#           exit-code: 0
       
-    - name: Extract frontend image URI
-      id: get-frontend-image
-      run: |
-        IMAGE=$(grep 'image:' argocd/frontend/deployment.yaml | awk '{print $2}')
-        echo "frontend-image-uri=$IMAGE" >> $GITHUB_OUTPUT
+#     - name: Extract frontend image URI
+#       id: get-frontend-image
+#       run: |
+#         IMAGE=$(grep 'image:' argocd/frontend/deployment.yaml | awk '{print $2}')
+#         echo "frontend-image-uri=$IMAGE" >> $GITHUB_OUTPUT
 
-    - name: Run Trivy vulnerability scanner (Frontend)
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ steps.get-frontend-image.outputs.frontend-image-uri }}
-        format: 'table'
-        output: 'frontend-trivy-results'
-        severity: 'CRITICAL,HIGH'
-        exit-code: 0
+#     - name: Run Trivy vulnerability scanner (Frontend)
+#       uses: aquasecurity/trivy-action@master
+#       with:
+#         image-ref: ${{ steps.get-frontend-image.outputs.frontend-image-uri }}
+#         format: 'table'
+#         output: 'frontend-trivy-results'
+#         severity: 'CRITICAL,HIGH'
+#         exit-code: 0
 
-    - name: SonarCloud Scan (Backend)
-      uses: SonarSource/sonarcloud-github-action@v2
-      with:
-        projectBaseDir: app/BankingSystemBackend
-        args: >
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          -Dsonar.java.binaries=target/classes
-          -Dsonar.exclusions=**/test/**,**/*Test.java
-          -Dsonar.tests=.
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#     - name: SonarCloud Scan (Backend)
+#       uses: SonarSource/sonarcloud-github-action@v2
+#       with:
+#         projectBaseDir: app/BankingSystemBackend
+#         args: >
+#           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+#           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+#           -Dsonar.java.binaries=target/classes
+#           -Dsonar.exclusions=**/test/**,**/*Test.java
+#           -Dsonar.tests=.
+#       env:
+#         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     
     
-    - name: SonarCloud Scan (Frontend)
-      uses: SonarSource/sonarcloud-github-action@v2
-      with:
-        projectBaseDir: app/BankingSystemFrontend
-        args: >
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#     - name: SonarCloud Scan (Frontend)
+#       uses: SonarSource/sonarcloud-github-action@v2
+#       with:
+#         projectBaseDir: app/BankingSystemFrontend
+#         args: >
+#           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+#           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+#       env:
+#         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+     
 
     
-    - name: Send Email on Success
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 587
-        username: ${{ secrets.EMAIL_SENDER }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "✅ Security Scan Passed"
-        to: ${{ secrets.EMAIL_RECEIVER }}
-        from: GitHub Actions <${{ secrets.EMAIL_SENDER }}>
-        body: |
-          ✅ Security and code quality scans passed successfully.
-          ✅ Image: ${{ steps.get-backend-image.outputs.backend-image-uri }}
-          ✅ Image: ${{ steps.get-frontend-image.outputs.frontend-image-uri }}
+#     - name: Send Email on Success
+#       uses: dawidd6/action-send-mail@v3
+#       with:
+#         server_address: smtp.gmail.com
+#         server_port: 587
+#         username: ${{ secrets.EMAIL_SENDER }}
+#         password: ${{ secrets.EMAIL_PASSWORD }}
+#         subject: "✅ Security Scan Passed"
+#         to: ${{ secrets.EMAIL_RECEIVER }}
+#         from: GitHub Actions <${{ secrets.EMAIL_SENDER }}>
+#         body: |
+#           ✅ Security and code quality scans passed successfully.
+#           ✅ Image: ${{ steps.get-backend-image.outputs.backend-image-uri }}
+#           ✅ Image: ${{ steps.get-frontend-image.outputs.frontend-image-uri }}
           
